@@ -15,14 +15,14 @@ variable "confluent_cloud_api_secret" {
 variable "environment_name" {
   description = "Name of the Confluent Cloud environment"
   type        = string
-  default     = "bunjang-env"
+  default     = "production-env"
 }
 
 # Kafka Cluster Configuration
 variable "cluster_name" {
   description = "Name of the Kafka cluster"
   type        = string
-  default     = "bunjang-cluster"
+  default     = "kafka-cluster"
 }
 
 variable "cloud_provider" {
@@ -41,7 +41,7 @@ variable "region" {
 variable "app_service_account_name" {
   description = "Name of the application service account"
   type        = string
-  default     = "bunjang-app-manager"
+  default     = "app-manager"
 }
 
 # Kafka Topics Configuration
@@ -113,26 +113,26 @@ variable "mysql_server_id" {
 variable "mysql_server_name" {
   description = "MySQL server name for CDC"
   type        = string
-  default     = "bunjang-mysql"
+  default     = "mysql-server"
 }
 
 variable "mysql_database_include_list" {
   description = "Comma-separated list of databases to include in CDC"
   type        = string
-  default     = "bunjang"
+  default     = "production"
 }
 
 variable "mysql_table_include_list" {
   description = "Comma-separated list of tables to include in CDC (format: database.table)"
   type        = string
-  default     = "bunjang.users,bunjang.products,bunjang.orders"
+  default     = "production.users,production.products,production.orders"
 }
 
 # MySQL Connector Configuration
 variable "mysql_connector_name" {
   description = "Name of the MySQL CDC connector"
   type        = string
-  default     = "bunjang-mysql-cdc"
+  default     = "mysql-cdc"
 }
 
 # S3 Configuration
@@ -163,5 +163,5 @@ variable "aws_secret_access_key" {
 variable "s3_connector_name" {
   description = "Name of the S3 sink connector"
   type        = string
-  default     = "bunjang-s3-sink"
+  default     = "s3-sink"
 }

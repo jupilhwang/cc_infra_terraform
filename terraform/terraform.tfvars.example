@@ -4,20 +4,20 @@ confluent_cloud_api_key    = "XXXXXXXXXX"
 confluent_cloud_api_secret = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
 # Environment and Cluster Configuration
-environment_name = "bunjang-production"
-cluster_name     = "bunjang-kafka-cluster"
+environment_name = "production"
+cluster_name     = "kafka-cluster"
 cloud_provider   = "AWS"
 region          = "ap-northeast-2"  # Seoul region
 
 # Service Account
-app_service_account_name = "bunjang-app-service-account"
+app_service_account_name = "app-service-account"
 
 # Kafka Topics
-mysql_cdc_topic_name       = "bunjang.mysql.cdc"
+mysql_cdc_topic_name       = "mysql.cdc"
 mysql_cdc_topic_partitions = 6
-s3_sink_topic_name         = "bunjang.s3.sink"
+s3_sink_topic_name         = "s3.sink"
 s3_sink_topic_partitions   = 6
-logs_topic_name            = "bunjang.logs"
+logs_topic_name            = "logs"
 logs_topic_partitions      = 6
 
 # MySQL Database Configuration
@@ -26,18 +26,18 @@ mysql_port                  = "3306"
 mysql_username              = "debezium_user"
 mysql_password              = "YOUR_MYSQL_PASSWORD"
 mysql_server_id             = "1001"
-mysql_server_name           = "bunjang-mysql-server"
-mysql_database_include_list = "bunjang"
-mysql_table_include_list    = "bunjang.users,bunjang.products,bunjang.orders,bunjang.transactions"
+mysql_server_name           = "mysql-server"
+mysql_database_include_list = "production"
+mysql_table_include_list    = "production.users,production.products,production.orders,production.transactions"
 
 # MySQL Connector
-mysql_connector_name = "bunjang-mysql-cdc-v2"
+mysql_connector_name = "mysql-cdc-v2"
 
 # S3 Configuration
-s3_bucket_name        = "bunjang-data-lake"
+s3_bucket_name        = "data-lake"
 s3_region            = "ap-northeast-2"
 aws_access_key_id    = "AKIAXXXXXXXXXXXXXXXXX"
 aws_secret_access_key = "XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"
 
 # S3 Connector
-s3_connector_name = "bunjang-s3-data-sink"
+s3_connector_name = "s3-data-sink"

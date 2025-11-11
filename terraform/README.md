@@ -2,21 +2,23 @@
 
 이 Terraform 설정은 Confluent Cloud에서 다음과 같은 ETL 파이프라인을 구성합니다:
 - Environment와 Standard Kafka Cluster
-- Service Account와 Admin Role
-- MySQL CDC Connector (Debezium v2)
-- S3 Sink Connector
+- Service Account와 EnvironmentAdmin Role
+- MySQL CDC Connector (Debezium v2) - Avro 포맷
+- S3 Sink Connector - Parquet 포맷으로 저장
+- Logs Topic (무한 보존)
 - 필요한 ACL 설정
 
 ## 아키텍처 구성
 
 ```
 MySQL Database 
-    ↓ (CDC)
-Kafka Topic (mysql-cdc)
-    ↓ (Stream Processing)
-Kafka Topic (s3-sink)
+    ↓ (CDC - Avro)
+Kafka Topics:
+  - mysql.cdc (Avro format)
+  - s3.sink (Avro format) 
+  - logs (무한 보존)
     ↓ (S3 Sink)
-AWS S3 Bucket
+AWS S3 Bucket (Parquet format with gzip)
 ```
 
 ## 사전 준비
@@ -33,7 +35,7 @@ MySQL에서 CDC를 위한 설정이 필요합니다:
 -- CDC 전용 사용자 생성
 CREATE USER 'debezium_user'@'%' IDENTIFIED BY 'your_password';
 GRANT SELECT, RELOAD, SHOW DATABASES, REPLICATION SLAVE, REPLICATION CLIENT ON *.* TO 'debezium_user'@'%';
-GRANT ALL PRIVILEGES ON bunjang.* TO 'debezium_user'@'%';
+GRANT ALL PRIVILEGES ON production.* TO 'debezium_user'@'%';
 FLUSH PRIVILEGES;
 
 -- MySQL 설정 확인 (my.cnf)
@@ -59,8 +61,8 @@ S3 버킷과 IAM 사용자/역할 설정:
                 "s3:ListBucket"
             ],
             "Resource": [
-                "arn:aws:s3:::bunjang-data-lake",
-                "arn:aws:s3:::bunjang-data-lake/*"
+                "arn:aws:s3:::data-lake",
+                "arn:aws:s3:::data-lake/*"
             ]
         }
     ]
@@ -115,22 +117,53 @@ terraform output mysql_connector_status_url
 ## 주요 리소스
 
 ### Environment & Cluster
-- **Environment**: `bunjang-production`
+- **Environment**: `production`
 - **Cluster**: Standard cluster (Single Zone)
 - **Region**: `ap-northeast-2` (Seoul)
 
 ### Service Account & Security
-- **Service Account**: CloudClusterAdmin 권한
+- **Service Account**: EnvironmentAdmin 권한
 - **API Keys**: Kafka 클러스터 접근용
 - **ACLs**: 토픽별 읽기/쓰기 권한 설정
 
 ### Topics
-- **MySQL CDC Topic**: `bunjang.mysql.cdc` (6 partitions)
-- **S3 Sink Topic**: `bunjang.s3.sink` (6 partitions)
+- **MySQL CDC Topic**: `mysql.cdc` (6 partitions) - Avro 포맷
+- **S3 Sink Topic**: `s3.sink` (6 partitions) - Avro 포맷
+- **Logs Topic**: `logs` (6 partitions) - 무한 보존
 
 ### Connectors
-- **MySQL CDC Connector**: Debezium MySQL Source v2
-- **S3 Sink Connector**: JSON 형식으로 시간별 파티셔닝
+- **MySQL CDC Connector**: Debezium MySQL Source v2 - Avro output
+- **S3 Sink Connector**: Avro input → Parquet 저장 (gzip 압축)
+
+## 데이터 포맷 및 스키마
+
+### Avro 및 Parquet 사용의 장점
+
+**Avro (Kafka Topics)**:
+- 스키마 진화: 스키마 변경 시 하위 호환성 보장
+- 압축 효율: JSON 대비 더 효율적인 직렬화
+- 타입 안정성: 강력한 타입 시스템으로 데이터 무결성 보장
+- Schema Registry: Confluent의 Schema Registry와 자동 통합
+
+**Parquet (S3 Storage)**:
+- 컬럼형 저장: 분석 쿼리에 최적화된 저장 구조
+- 압축 효율: 높은 압축률로 스토리지 비용 절약
+- 빠른 쿼리: Amazon Athena, Spark 등에서 빠른 성능
+- 스키마 보존: 메타데이터와 스키마 정보 포함
+
+### S3 파일 구조
+
+Parquet 파일들이 시간별로 파티셔닝되어 저장됩니다:
+
+```
+s3://data-lake/
+├── year=2025/
+│   ├── month=11/
+│   │   ├── day=11/
+│   │   │   ├── hour=10/
+│   │   │   │   └── s3.sink+0+0000000000.parquet
+│   │   │   │   └── s3.sink+1+0000000000.parquet
+```
 
 ## 모니터링 및 관리
 
@@ -192,4 +225,11 @@ terraform destroy
 
 - 토픽 파티션 수는 예상 처리량에 따라 조정
 - 커넥터의 `tasks.max` 값으로 병렬 처리 조정
-- Schema Registry 추가 고려 (Avro 스키마 관리)
+- Schema Registry가 자동으로 활성화되어 Avro 스키마 관리
+- 무한 보존 logs 토픽을 활용한 로그 수집 파이프라인 구축
+- Parquet 파일을 활용한 데이터 웨어하우스 구축 (Athena, Redshift, BigQuery 등)
+
+## Provider 버전
+
+- **Confluent Provider**: `~> 2.51.0` (최신 버전)
+- 정기적인 provider 업데이트로 최신 기능 및 보안 패치 적용
