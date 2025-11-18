@@ -1,12 +1,12 @@
 # Environment Outputs
 output "environment_id" {
   description = "The ID of the Confluent Cloud environment"
-  value       = confluent_environment.main.id
+  value       = confluent_environment.poc.id
 }
 
 output "environment_name" {
   description = "The name of the Confluent Cloud environment"
-  value       = confluent_environment.main.display_name
+  value       = confluent_environment.poc.display_name
 }
 
 # Kafka Cluster Outputs
@@ -43,40 +43,27 @@ output "kafka_api_secret" {
   sensitive   = true
 }
 
-# Topic Outputs
-output "mysql_cdc_topic_name" {
-  description = "The name of the MySQL CDC topic"
-  value       = confluent_kafka_topic.mysql_cdc_topic.topic_name
+output "schema_registry_api_key" {
+  description = "Schema Registry API Key for the service account"
+  value       = confluent_api_key.schema_registry_api_key.id
+  sensitive   = true
 }
 
-output "s3_sink_topic_name" {
-  description = "The name of the S3 sink topic"
-  value       = confluent_kafka_topic.s3_sink_topic.topic_name
+output "schema_registry_api_secret" {
+  description = "Schema Registry API Secret for the service account"
+  value       = confluent_api_key.schema_registry_api_key.secret
+  sensitive   = true
 }
 
-output "logs_topic_name" {
-  description = "The name of the logs topic"
-  value       = confluent_kafka_topic.logs_topic.topic_name
-}
+# # Topic Outputs
+# # Connector Outputs
+# output "mysql_connector_id" {
+#   description = "The ID of the MySQL CDC connector"
+#   value       = confluent_connector.mysql_cdc.id
+# }
 
-# Connector Outputs
-output "mysql_connector_id" {
-  description = "The ID of the MySQL CDC connector"
-  value       = confluent_connector.mysql_cdc.id
-}
-
-output "s3_connector_id" {
-  description = "The ID of the S3 sink connector"
-  value       = confluent_connector.s3_sink.id
-}
-
-# Connector Status URLs (for manual checking)
-output "mysql_connector_status_url" {
-  description = "URL to check MySQL connector status"
-  value       = "https://confluent.cloud/environments/${confluent_environment.main.id}/clusters/${confluent_kafka_cluster.standard.id}/connectors/${confluent_connector.mysql_cdc.id}"
-}
-
-output "s3_connector_status_url" {
-  description = "URL to check S3 connector status"
-  value       = "https://confluent.cloud/environments/${confluent_environment.main.id}/clusters/${confluent_kafka_cluster.standard.id}/connectors/${confluent_connector.s3_sink.id}"
-}
+# # Connector Status URLs (for manual checking)
+# output "mysql_connector_status_url" {
+#   description = "URL to check MySQL connector status"
+#   value       = "https://confluent.cloud/environments/${confluent_environment.poc.id}/clusters/${confluent_kafka_cluster.standard.id}/connectors/${confluent_connector.mysql_cdc.id}"
+# }

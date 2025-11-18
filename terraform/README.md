@@ -76,8 +76,15 @@ S3 버킷과 IAM 사용자/역할 설정:
 
 ```hcl
 # API 인증정보
+project_name             = "bunjang-poc"
 confluent_cloud_api_key    = "YOUR_ACTUAL_API_KEY"
 confluent_cloud_api_secret = "YOUR_ACTUAL_API_SECRET"
+
+# 환경 및 스키마 거버넌스 설정
+cloud_provider          = "AWS"
+region                  = "ap-northeast-2"
+schema_registry_package = "ADVANCED"
+schema_registry_region  = "ap-northeast-2"
 
 # MySQL 설정
 mysql_hostname = "your-mysql-rds-endpoint.amazonaws.com"
@@ -89,6 +96,8 @@ s3_bucket_name = "your-actual-bucket-name"
 aws_access_key_id = "YOUR_AWS_ACCESS_KEY"
 aws_secret_access_key = "YOUR_AWS_SECRET_KEY"
 ```
+
+> 참고: Terraform이 `project_name` 값을 모든 Confluent 리소스 이름의 prefix로 자동 적용합니다 (예: `bunjang-poc-production`, `bunjang-poc-mysql.cdc`).
 
 ### 2. Terraform 실행
 
@@ -117,35 +126,42 @@ terraform output mysql_connector_status_url
 ## 주요 리소스
 
 ### Environment & Cluster
-- **Environment**: `production`
-- **Cluster**: Standard cluster (Single Zone)
+
+- **Environment**: `bunjang-poc-production`
+- **Cluster**: `bunjang-poc-kafka-cluster` (Standard, Single Zone)
 - **Region**: `ap-northeast-2` (Seoul)
+- **Schema Governance**: Schema Registry Advanced package deployed in `ap-northeast-2`
 
 ### Service Account & Security
-- **Service Account**: EnvironmentAdmin 권한
-- **API Keys**: Kafka 클러스터 접근용
+
+- **Service Account**: `bunjang-poc-app-service-account` (EnvironmentAdmin)
+- **API Keys**: `bunjang-poc-app-manager-kafka-api-key` (Kafka 접근)
 - **ACLs**: 토픽별 읽기/쓰기 권한 설정
 
 ### Topics
-- **MySQL CDC Topic**: `mysql.cdc` (6 partitions) - Avro 포맷
-- **S3 Sink Topic**: `s3.sink` (6 partitions) - Avro 포맷
-- **Logs Topic**: `logs` (6 partitions) - 무한 보존
+
+- **MySQL CDC Topic**: `bunjang-poc-mysql.cdc` (6 partitions) - Avro 포맷
+- **S3 Sink Topic**: `bunjang-poc-s3.sink` (6 partitions) - Avro 포맷
+- **Logs Topic**: `bunjang-poc-logs` (6 partitions) - 무한 보존
 
 ### Connectors
-- **MySQL CDC Connector**: Debezium MySQL Source v2 - Avro output
-- **S3 Sink Connector**: Avro input → Parquet 저장 (gzip 압축)
+
+- **MySQL CDC Connector**: `bunjang-poc-mysql-cdc-v2` (Debezium v2, Avro output)
+- **S3 Sink Connector**: `bunjang-poc-s3-data-sink` (Avro input → Parquet 저장, gzip)
 
 ## 데이터 포맷 및 스키마
 
 ### Avro 및 Parquet 사용의 장점
 
 **Avro (Kafka Topics)**:
+
 - 스키마 진화: 스키마 변경 시 하위 호환성 보장
 - 압축 효율: JSON 대비 더 효율적인 직렬화
 - 타입 안정성: 강력한 타입 시스템으로 데이터 무결성 보장
 - Schema Registry: Confluent의 Schema Registry와 자동 통합
 
 **Parquet (S3 Storage)**:
+
 - 컬럼형 저장: 분석 쿼리에 최적화된 저장 구조
 - 압축 효율: 높은 압축률로 스토리지 비용 절약
 - 빠른 쿼리: Amazon Athena, Spark 등에서 빠른 성능
@@ -155,7 +171,7 @@ terraform output mysql_connector_status_url
 
 Parquet 파일들이 시간별로 파티셔닝되어 저장됩니다:
 
-```
+```text
 s3://data-lake/
 ├── year=2025/
 │   ├── month=11/
@@ -168,7 +184,9 @@ s3://data-lake/
 ## 모니터링 및 관리
 
 ### Confluent Cloud Console
+
 생성된 리소스는 Confluent Cloud Console에서 모니터링할 수 있습니다:
+
 - Environment → Clusters → Connectors
 - Topics → Messages 탭에서 실시간 데이터 확인
 
